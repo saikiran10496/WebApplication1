@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WebApplication1
-          path: ${{ github.workspace }}/deploy/WebApplication1
+          path: ${{ github.workspace }}/deploy
 
   deploy:
     name: Deploy to Azure Web App
@@ -54,15 +54,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: WebApplication1
-          path: ${{ github.workspace }}/deploy/WebApplication1
+          path: ${{ github.workspace }}/deploy
 
-      - name: Deploy to Azure Web App (WebApplication1)
+      - name: Deploy to Azure Web App (WebApplication1 Folder)
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'Git-webapp'
+          app-name: 'my-webapp4444'
           publish-profile: ${{ secrets.AZURE_CREDENTIALS }}
           package: ${{ github.workspace }}/deploy/WebApplication1
           clean: false
-          slot-name: 'production'
-          virtual-application: '/WebApplication1'
-          additional-deployment-arguments: '-skip:objectName="filePath",absolutePath="site\wwwroot\WebApplication2\*" -enableRule:DoNotDeleteRule'
+          additional-deployment-arguments: '-enableRule:DoNotDeleteRule'
