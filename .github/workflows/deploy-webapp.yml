@@ -18,13 +18,13 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Publish WebApplication1
-        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/WebApplication1
+        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebApplication1
-          path: ${{ github.workspace }}/deploy/WebApplication1
+          path: ${{ github.workspace }}/deploy
 
   deploy:
     name: Deploy to Azure Web App
@@ -47,4 +47,5 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/deploy
+          virtual-application: 'WebApplication1'
           additional-deployment-arguments: '-enableRule:DoNotDeleteRule -dest:site\wwwroot\WebApplication1'
