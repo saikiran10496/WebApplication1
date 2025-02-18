@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'WebApplication1/**'
-      - '.github/workflows/deploy-webapp.yml'
+      - '.github/workflows/deploy-webapp1.yml'
 
 jobs:
   build:
@@ -23,8 +23,21 @@ jobs:
       - name: Publish WebApplication1
         run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/WebApplication1
 
+      # Create the correct directory structure
+      - name: Create Directory Structure
+        run: |
+          mkdir -p ${{ github.workspace }}/deploy/wwwroot/WebApplication1
+          Move-Item -Path ${{ github.workspace }}/deploy/WebApplication1/* -Destination ${{ github.workspace }}/deploy/wwwroot/WebApplication1/
+
+      # Add deployment script
+      - name: Create Deploy Script
+        shell: cmd
+        run: |
+          echo @echo off > ${{ github.workspace }}/deploy/deploy.cmd
+          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\wwwroot\WebApplication1\*" "%%DEPLOYMENT_TARGET%%\WebApplication1\" >> ${{ github.workspace }}/deploy/deploy.cmd
+
       - name: Create ZIP Package
-        run: Compress-Archive -Path ${{ github.workspace }}/deploy/WebApplication1/* -DestinationPath ${{ github.workspace }}/WebApplication1.zip
+        run: Compress-Archive -Path "${{ github.workspace }}/deploy/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -53,5 +66,4 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          #slot-name: 'production'  # Optional: Include if you're using deployment slots
-          resource-group-name: 'Git-grp'  # Replace with your resource group name
+          slot-name: 'production'
