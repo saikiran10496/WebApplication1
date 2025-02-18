@@ -18,13 +18,16 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Publish WebApplication1
-        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy
+        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/WebApplication1
+
+      - name: Create ZIP Package
+        run: Compress-Archive -Path ${{ github.workspace }}/deploy/WebApplication1/* -DestinationPath ${{ github.workspace }}/WebApplication1.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebApplication1
-          path: ${{ github.workspace }}/deploy
+          path: ${{ github.workspace }}/WebApplication1.zip
 
   deploy:
     name: Deploy to Azure Web App
@@ -35,17 +38,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: WebApplication1
-          path: ${{ github.workspace }}/deploy
+          path: ${{ github.workspace }}
 
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy WebApplication1 to Azure Web App (Inside WebApplication1 Folder)
+      - name: Deploy WebApplication1 to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
-          package: ${{ github.workspace }}/deploy
-          virtual-application: 'WebApplication1'
-          additional-deployment-arguments: '-enableRule:DoNotDeleteRule -dest:site\wwwroot\WebApplication1'
+          package: ${{ github.workspace }}/WebApplication1.zip
