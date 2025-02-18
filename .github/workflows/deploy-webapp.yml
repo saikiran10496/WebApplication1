@@ -18,21 +18,33 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Publish WebApplication1
-        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/WebApplication1
+        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/publish
+
+      - name: Prepare Deployment Structure
+        run: |
+          # Create the correct directory structure
+          mkdir -p ${{ github.workspace }}/deploy/WebApplication1
+          
+          # Copy all published files to the WebApplication1 directory
+          Copy-Item -Path "${{ github.workspace }}/publish/*" -Destination "${{ github.workspace }}/deploy/WebApplication1" -Recurse
+          
+          # Copy web.config to the WebApplication1 directory
+          Copy-Item -Path "WebApplication1/web.config" -Destination "${{ github.workspace }}/deploy/WebApplication1/web.config" -Force
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path ${{ github.workspace }}/deploy/WebApplication1/* -DestinationPath ${{ github.workspace }}/WebApplication1.zip
+        run: Compress-Archive -Path ${{ github.workspace }}/deploy/* -DestinationPath ${{ github.workspace }}/deploy.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebApplication1
-          path: ${{ github.workspace }}/WebApplication1.zip
+          path: ${{ github.workspace }}/deploy.zip
 
   deploy:
     name: Deploy to Azure Web App
     runs-on: windows-latest
     needs: build
+    environment: production
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -43,10 +55,13 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy WebApplication1 to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
-          package: ${{ github.workspace }}/WebApplication1.zip
+          package: ${{ github.workspace }}/deploy.zip
+          respect-virtual-application: true
