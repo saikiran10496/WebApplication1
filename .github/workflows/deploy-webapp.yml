@@ -1,4 +1,4 @@
-name: CI/CD for WebApplication1
+name: Deploy WebApplication1 to Azure Web App
 
 on:
   push:
@@ -7,9 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build and Publish WebApplication1
     runs-on: windows-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -17,54 +15,36 @@ jobs:
       - name: Setup .NET 6
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '6.x'
+          dotnet-version: '6.0.x'
 
-      - name: Restore Dependencies
-        run: dotnet restore WebApplication1/WebApplication1.csproj
-
-      - name: Build Application
-        run: dotnet build WebApplication1/WebApplication1.csproj --configuration Release --no-restore
-
-      - name: Publish Application
-        run: dotnet publish WebApplication1/WebApplication1.csproj --configuration Release --output ${{ github.workspace }}/publish
-
-      - name: Organize Deployment Structure
-        shell: pwsh
-        run: |
-          $deployPath = "${{ github.workspace }}/deploy/WebApplication1"
-          if (Test-Path $deployPath) { Remove-Item -Path $deployPath -Recurse -Force }
-          New-Item -Path $deployPath -ItemType Directory -Force
-          Get-ChildItem -Path "${{ github.workspace }}/publish" | Copy-Item -Destination $deployPath -Recurse -Force
-          Write-Host "Final Deployment Structure:"
-          Get-ChildItem -Path $deployPath -Recurse
+      - name: Publish WebApplication1
+        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/WebApplication1
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebApplication1
-          path: ${{ github.workspace }}/deploy
-          retention-days: 5
+          path: ${{ github.workspace }}/deploy/WebApplication1
 
   deploy:
-      name: Deploy to Azure Web App
-      runs-on: windows-latest
-      needs: build
-  
-      steps:
-        - name: Download Artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: WebApplication1
-            path: ${{ github.workspace }}/deploy
-  
-        - name: Azure Login
-          uses: azure/login@v1
-          with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
-  
-        - name: Deploy WebApplication1 to Azure Web App
-          uses: azure/webapps-deploy@v2
-          with:
-            app-name: 'Git-webapp'
-            package: ${{ github.workspace }}/deploy/WebApplication1  
+    name: Deploy to Azure Web App
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: WebApplication1
+          path: ${{ github.workspace }}/deploy
 
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy WebApplication1 to Azure Web App (Inside WebApplication1 Folder)
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'Git-webapp'
+          package: ${{ github.workspace }}/deploy
+          additional-deployment-arguments: '-enableRule:DoNotDeleteRule -dest:site\wwwroot\WebApplication1'
