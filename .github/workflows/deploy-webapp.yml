@@ -45,26 +45,26 @@ jobs:
           path: ${{ github.workspace }}/deploy
           retention-days: 5
 
-    deploy:
-    name: Deploy to Azure Web App
-    runs-on: windows-latest
-    needs: build
-
-    steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: WebApplication1
-          path: ${{ github.workspace }}/deploy
-
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy WebApplication1 to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: 'Git-webapp'
-          package: ${{ github.workspace }}/deploy/WebApplication1
+  deploy:
+      name: Deploy to Azure Web App
+      runs-on: windows-latest
+      needs: build
+  
+      steps:
+        - name: Download Artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: WebApplication1
+            path: ${{ github.workspace }}/deploy
+  
+        - name: Azure Login
+          uses: azure/login@v1
+          with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+  
+        - name: Deploy WebApplication1 to Azure Web App
+          uses: azure/webapps-deploy@v2
+          with:
+            app-name: 'Git-webapp'
+            package: ${{ github.workspace }}/deploy/WebApplication1  
 
