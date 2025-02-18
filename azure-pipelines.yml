@@ -1,0 +1,111 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  azureSubscription: 'my-azure-connection'
+  webAppName: 'my-webapp4444'
+
+stages:
+- stage: Build
+  displayName: 'Build WebApplication1'
+  jobs:
+  - job: Build
+    displayName: 'Build and Publish WebApplication1'
+    steps:
+    - checkout: self
+
+    - task: UseDotNet@2
+      displayName: 'Install .NET 6 SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '6.x'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish WebApplication1'
+      inputs:
+        command: 'publish'
+        projects: 'WebApplication1/WebApplication1.csproj'
+        arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/temp'
+        zipAfterPublish: false
+
+    # Reorganize the deployment structure
+    - task: PowerShell@2
+      enabled: true
+      displayName: 'Organize Deployment Structure'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $sourcePath = "$(Build.ArtifactStagingDirectory)/temp"
+          $deployPath = "$(Build.ArtifactStagingDirectory)/deploy/WebApplication1"
+          
+          Write-Host "Source Path: $sourcePath"
+          Write-Host "Deploy Path: $deployPath"
+          
+          # Clean and create deploy directory (only for WebApplication1)
+          if (Test-Path $deployPath) {
+              Remove-Item -Path $deployPath -Recurse -Force
+          }
+          New-Item -Path $deployPath -ItemType Directory -Force
+          
+          # Copy all files to deploy path
+          Get-ChildItem -Path $sourcePath | Copy-Item -Destination $deployPath -Recurse -Force
+
+          # If there's a nested WebApplication1 folder, consolidate it
+          $nestedApp = Join-Path $deployPath "WebApplication1"
+          if (Test-Path $nestedApp) {
+              # Move all contents up one level
+              Get-ChildItem -Path $nestedApp | Copy-Item -Destination $deployPath -Recurse -Force
+              Remove-Item -Path $nestedApp -Recurse -Force
+          }
+
+          # Clean up temporary folders
+          Remove-Item -Path $sourcePath -Recurse -Force
+          
+          # Verify final structure
+          Write-Host "Final Deployment Structure:"
+          Get-ChildItem -Path $deployPath -Recurse
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/deploy'
+        ArtifactName: 'drop'      
+
+- stage: Deploy
+  displayName: 'Deploy WebApplication1'
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploy WebApplication1'
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              buildType: 'current'
+              artifactName: 'drop'
+              downloadPath: '$(Pipeline.Workspace)'
+
+          - task: AzureRmWebAppDeployment@4
+            displayName: 'Deploy to Azure Web App'
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              WebAppName: '$(webAppName)'
+              package: '$(Pipeline.Workspace)/drop'
+              VirtualApplication: ''
+              enableCustomDeployment: true
+              DeploymentType: 'webDeploy'
+              TakeAppOfflineFlag: true
+              RemoveAdditionalFilesFlag: true
+              ExcludeFilesFromAppDataFlag: true
+              AppSettings: '-SCM_DO_BUILD_DURING_DEPLOYMENT false'
+              AdditionalArguments: '-skip:objectName="filePath",absolutePath="site\wwwroot\WebApplication2\*" -enableRule:DoNotDeleteRule -retryAttempts:6 -retryInterval:10000'

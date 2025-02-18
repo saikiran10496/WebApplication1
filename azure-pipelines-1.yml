@@ -1,0 +1,133 @@
+# trigger:
+  #branches:
+   # include:
+    #  - main
+
+#pool:
+ # vmImage: 'windows-latest'
+
+variables:
+  azureSubscription: 'my-azure-connection'
+  webAppName: 'my-webapp6666'
+
+resources:
+  repositories:
+    - repository: WebApplication1
+      type: git
+      name: webapp/WebApplication1  # Update with your Azure DevOps repo path
+      ref: main
+
+    - repository: WebApplication2
+      type: git
+      name: webapp/WebApplication2  # Update with your Azure DevOps repo path
+      ref: main
+
+stages:
+- stage: Build
+  displayName: 'Build Applications'
+  jobs:
+  - job: Build
+    displayName: 'Build and Publish'
+    steps:
+    - checkout: self
+    - checkout: WebApplication1
+    - checkout: WebApplication2
+
+    - task: UseDotNet@2
+      displayName: 'Install .NET 6 SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '6.x'
+
+    # Restore, build, and publish WebApplication1
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish WebApplication1'
+      inputs:
+        command: 'publish'
+        projects: 'WebApplication1/WebApplication1/WebApplication1.csproj'
+        arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/WebApplication1'
+        zipAfterPublish: false
+
+    # Restore, build, and publish WebApplication2
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish WebApplication2'
+      inputs:
+        command: 'publish'
+        projects: 'WebApplication2/WebApplication2/WebApplication2.csproj'
+        arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)/WebApplication2'
+        zipAfterPublish: false
+
+    # Create ZIP for WebApplication1
+    - task: ArchiveFiles@2
+      displayName: 'Zip WebApplication1'
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/WebApplication1'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/WebApplication1.zip'
+        replaceExistingArchive: true
+
+    # Create ZIP for WebApplication2
+    - task: ArchiveFiles@2
+      displayName: 'Zip WebApplication2'
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/WebApplication2'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/WebApplication2.zip'
+        replaceExistingArchive: true
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish WebApplication1 Artifact'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/WebApplication1.zip'
+        ArtifactName: 'WebApplication1'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish WebApplication2 Artifact'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/WebApplication2.zip'
+        ArtifactName: 'WebApplication2'
+
+- stage: Deploy
+  displayName: 'Deploy Applications'
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy
+    displayName: 'Deploy to Azure Web App'
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download WebApplication1 Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: 'WebApplication1'
+              downloadPath: '$(Pipeline.Workspace)/WebApplication1'
+
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download WebApplication2 Artifact'
+            inputs:
+              buildType: 'current'
+              artifactName: 'WebApplication2'
+              downloadPath: '$(Pipeline.Workspace)/WebApplication2'
+
+          - task: AzureWebApp@1
+            displayName: 'Deploy WebApplication1'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: '$(webAppName)'
+              package: '$(Pipeline.Workspace)/WebApplication1/WebApplication1.zip'
+              virtualApplication: 'WebApplication1'
+
+          - task: AzureWebApp@1
+            displayName: 'Deploy WebApplication2'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: '$(webAppName)'
+              package: '$(Pipeline.Workspace)/WebApplication2/WebApplication2.zip'
+              virtualApplication: 'WebApplication2'

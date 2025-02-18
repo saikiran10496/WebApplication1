@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PacktForNuget.CSdotnet.SharedLibrary" Version="6.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <CopyAllFilesToSingleFolderForPackageDependsOn>$(CopyAllFilesToSingleFolderForPackageDependsOn);CopyStaticFiles</CopyAllFilesToSingleFolderForPackageDependsOn>
+  </PropertyGroup>
+
+  <Target Name="CopyStaticFiles">
+    <Copy SourceFiles="wwwroot\**\*" DestinationFolder="$(OutDir)wwwroot\" />
+  </Target>
+
+
+  <!-- Removed explicit content references to wwwroot and Razor Pages since they are handled by default -->
+</Project>
