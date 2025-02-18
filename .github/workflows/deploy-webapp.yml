@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'WebApplication1/**'
-      - '.github/workflows/deploy-webapp1.yml'
+      - '.github/workflows/deploy-webapp.yml'
 
 jobs:
   build:
