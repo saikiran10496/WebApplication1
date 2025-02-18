@@ -23,21 +23,22 @@ jobs:
       - name: Publish WebApplication1
         run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/WebApplication1
 
-      # Create the correct directory structure
+      # Create the correct directory structure without extra wwwroot
       - name: Create Directory Structure
         run: |
-          mkdir -p ${{ github.workspace }}/deploy/wwwroot/WebApplication1
-          Move-Item -Path ${{ github.workspace }}/deploy/WebApplication1/* -Destination ${{ github.workspace }}/deploy/wwwroot/WebApplication1/
+          mkdir -p ${{ github.workspace }}/deploy/temp/WebApplication1
+          Move-Item -Path ${{ github.workspace }}/deploy/WebApplication1/* -Destination ${{ github.workspace }}/deploy/temp/WebApplication1/
 
       # Add deployment script
       - name: Create Deploy Script
         shell: cmd
         run: |
-          echo @echo off > ${{ github.workspace }}/deploy/deploy.cmd
-          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\wwwroot\WebApplication1\*" "%%DEPLOYMENT_TARGET%%\WebApplication1\" >> ${{ github.workspace }}/deploy/deploy.cmd
+          echo @echo off > ${{ github.workspace }}/deploy/temp/deploy.cmd
+          echo if not exist "%%DEPLOYMENT_TARGET%%\WebApplication1" mkdir "%%DEPLOYMENT_TARGET%%\WebApplication1" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
+          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\WebApplication1\*" "%%DEPLOYMENT_TARGET%%\WebApplication1\" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}/deploy/temp/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -66,4 +67,4 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          slot-name: 'production'
+          #slot-name: 'production'
