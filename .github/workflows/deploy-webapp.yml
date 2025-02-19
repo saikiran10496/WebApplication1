@@ -26,10 +26,12 @@ jobs:
         run: |
           $deployPath = "${{ github.workspace }}/deploy/WebApplication1"
           New-Item -ItemType Directory -Path $deployPath -Force
-          Get-ChildItem -Path "${{ github.workspace }}/published" | Copy-Item -Destination $deployPath -Recurse -Force
+          Copy-Item -Path "${{ github.workspace }}/published/*" -Destination $deployPath -Recurse -Force
+          Get-ChildItem -Path $deployPath -Recurse | Format-Table -Property FullName, Length
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}/deploy/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        shell: pwsh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
