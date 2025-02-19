@@ -30,7 +30,7 @@ jobs:
           Get-ChildItem -Path $deployPath -Recurse | Format-Table -Property FullName, Length
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}/deploy/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
         shell: pwsh
 
       - name: Upload Artifact
@@ -60,3 +60,4 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
+          target-path: 'site\wwwroot\WebApplication1'
