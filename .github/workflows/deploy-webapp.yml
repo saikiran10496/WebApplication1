@@ -60,4 +60,6 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          target-path: 'WebApplication1'
+          slot-name: 'production'
+          type: 'zip'
+          clean: false
