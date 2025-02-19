@@ -20,7 +20,7 @@ If you want to learn more about creating good readme files then refer the follow
 - [Chakra Core](https://github.com/Microsoft/ChakraCore)
 
 
-******************REPO STRUCTURE***********************
+******************REPO STRUCTURE**************************
 
 
 WebApplication1 (Azure DevOps Repo)
