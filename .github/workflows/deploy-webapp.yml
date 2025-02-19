@@ -60,6 +60,5 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          slot-name: 'production'
           type: 'zip'
           clean: false
