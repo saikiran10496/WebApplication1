@@ -19,10 +19,22 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Restore NuGet packages
-        run: dotnet restore 'WebApplication1/WebApplication1.sln'
+        run: |
+          if (Test-Path -Path 'WebApplication1/WebApplication1.sln') {
+            dotnet restore 'WebApplication1/WebApplication1.sln'
+          } else {
+            Write-Error 'Solution file not found.'
+            exit 1
+          }
 
       - name: Build and Publish WebApplication1
-        run: dotnet publish 'WebApplication1/WebApplication1.csproj' --configuration Release --output ${{ github.workspace }}/publish/WebApplication1
+        run: |
+          if (Test-Path -Path 'WebApplication1/WebApplication1.csproj') {
+            dotnet publish 'WebApplication1/WebApplication1.csproj' --configuration Release --output ${{ github.workspace }}/publish/WebApplication1
+          } else {
+            Write-Error 'Project file not found.'
+            exit 1
+          }
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
@@ -50,7 +62,7 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'Git-webapp'
+          app-name: 'my-webapp4444'
           package: '${{ github.workspace }}/WebApplication1'
           slot-name: 'production'
           virtual-application: 'WebApplication1'
