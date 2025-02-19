@@ -19,7 +19,7 @@ jobs:
           dotnet-version: '6.0.x'
 
       - name: Restore NuGet packages
-        run: dotnet restore '**/*.sln'
+        run: dotnet restore 'WebApplication1/WebApplication1.sln'
 
       - name: Build and Publish WebApplication1
         run: dotnet publish 'WebApplication1/WebApplication1.csproj' --configuration Release --output ${{ github.workspace }}/publish/WebApplication1
