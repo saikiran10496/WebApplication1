@@ -29,8 +29,8 @@ jobs:
 
     - name: Publish WebApplication1
       run: |
-        dotnet publish **/WebApplication1.csproj \
-          --configuration Release \
+        dotnet publish **/WebApplication1.csproj `
+          --configuration Release `
           --output ${{ env.PUBLISH_PATH }}
 
     - name: Upload artifact
