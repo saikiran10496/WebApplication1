@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'WebApplication1/**'
 
 jobs:
   build:
@@ -19,7 +21,15 @@ jobs:
           
       - name: Publish WebApplication1
         run: |
-          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/WebApplication1"
+          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/site/wwwroot"
+          
+      - name: Add deployment config
+        run: |
+          Add-Content -Path "${{ github.workspace }}/publish/.deployment" -Value @"
+          [config]
+          SCM_DO_BUILD_DURING_DEPLOYMENT=true
+          WEBSITE_RUN_FROM_PACKAGE=0
+          "@
           
       - name: Create ZIP Package
         run: Compress-Archive -Path "${{ github.workspace }}/publish/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
@@ -46,15 +56,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
-      - name: Stop Azure Web App
-        run: az webapp stop --name Git-webapp --resource-group Git-grp
-        continue-on-error: true
-        
       - name: Deploy WebApplication1 to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          
-      - name: Start Azure Web App
-        run: az webapp start --name Git-webapp --resource-group Git-grp
+          respect-pom-xml: false
+          clean: false
