@@ -71,7 +71,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
       - name: Stop Azure Web App
-        run: az webapp stop --name Git-webapp --resource-group MyResourceGroup
+        run: az webapp stop --name Git-webapp --resource-group Git-grp
         continue-on-error: true  # Avoid failure if already stopped
 
 
@@ -82,4 +82,4 @@ jobs:
           package: ${{ github.workspace }}/WebApplication1.zip
 
       - name: Start Azure Web App
-        run: az webapp start --name Git-webapp --resource-group MyResourceGroup
+        run: az webapp start --name Git-webapp --resource-group Git-grp
