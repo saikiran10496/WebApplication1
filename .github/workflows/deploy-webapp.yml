@@ -29,7 +29,7 @@ jobs:
           Get-ChildItem -Path "${{ github.workspace }}/published" | Copy-Item -Destination $deployPath -Recurse -Force
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}/deploy/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -58,4 +58,3 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          virtual-path: '/WebApplication1'
