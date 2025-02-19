@@ -20,10 +20,10 @@ jobs:
       - name: Build and Publish WebApplication1
         run: |
           dotnet restore
-          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/publish/WebApplication1
+          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/publish/site/wwwroot/WebApplication1
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/publish/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}/publish/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -54,4 +54,4 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          virtual-application: 'WebApplication1'
+          slot-name: 'production'
