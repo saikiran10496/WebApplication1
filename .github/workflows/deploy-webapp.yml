@@ -18,23 +18,10 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Restore NuGet packages
-        run: |
-          if (Test-Path -Path 'WebApplication1/WebApplication1.sln') {
-            dotnet restore 'WebApplication1/WebApplication1.sln'
-          } else {
-            Write-Error 'Solution file not found.'
-            exit 1
-          }
-
       - name: Build and Publish WebApplication1
         run: |
-          if (Test-Path -Path 'WebApplication1/WebApplication1.csproj') {
-            dotnet publish 'WebApplication1/WebApplication1.csproj' --configuration Release --output ${{ github.workspace }}/publish/WebApplication1
-          } else {
-            Write-Error 'Project file not found.'
-            exit 1
-          }
+          dotnet restore
+          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/published"
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
