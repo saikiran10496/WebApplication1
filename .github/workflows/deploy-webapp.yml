@@ -14,21 +14,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup .NET 6
-        uses: actions/setup-dotnet@v2
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
 
       - name: Restore NuGet packages
-        run: dotnet restore ${{ env.solution }}
+        run: dotnet restore '**/*.sln'
 
       - name: Build and Publish WebApplication1
-        run: dotnet publish '**/WebApplication1.csproj' --configuration ${{ env.buildConfiguration }} --output ${{ github.workspace }}/WebApplication1
+        run: dotnet publish 'WebApplication1/WebApplication1.csproj' --configuration Release --output ${{ github.workspace }}/publish/WebApplication1
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: drop
-          path: ${{ github.workspace }}/WebApplication1
+          name: WebApplication1
+          path: ${{ github.workspace }}/publish/WebApplication1
 
   deploy:
     name: Deploy to Azure Web App
@@ -39,7 +39,8 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: drop
+          name: WebApplication1
+          path: ${{ github.workspace }}
 
       - name: Azure Login
         uses: azure/login@v1
@@ -47,7 +48,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
           app-name: 'Git-webapp'
           package: '${{ github.workspace }}/WebApplication1'
@@ -55,4 +56,7 @@ jobs:
           virtual-application: 'WebApplication1'
           enable-custom-deployment: true
           deployment-type: 'webDeploy'
+          take-app-offline: true
+          remove-additional-files: true
+          exclude-files-from-app-data: true
           app-settings: '-SCM_DO_BUILD_DURING_DEPLOYMENT false'
