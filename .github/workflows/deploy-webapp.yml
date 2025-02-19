@@ -1,64 +1,52 @@
-name: Build and Deploy ASP.NET Core
+name: Deploy WebApplication1 to Azure Web App
 
 on:
   push:
     branches:
       - main
-
-env:
-  AZURE_WEBAPP_NAME: Git-webapp
-  DOTNET_VERSION: '6.0.x'
-  PUBLISH_PATH: './publish/WebApplication1'
-
 jobs:
   build:
-    name: Build and Publish
     runs-on: windows-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Setup .NET 6
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '6.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Publish WebApplication1
+        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/WebApplication1
 
-    - name: Publish WebApplication1
-      run: dotnet publish **/WebApplication1.csproj --configuration Release --output ${{ env.PUBLISH_PATH }}
+      - name: Create ZIP Package
+        run: Compress-Archive -Path ${{ github.workspace }}/deploy/WebApplication1/* -DestinationPath ${{ github.workspace }}/WebApplication1.zip
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: webapp
-        path: ${{ env.PUBLISH_PATH }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebApplication1
+          path: ${{ github.workspace }}/WebApplication1.zip
 
   deploy:
-    name: Deploy to Azure
+    name: Deploy to Azure Web App
     runs-on: windows-latest
     needs: build
-    environment: Production
-
     steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: webapp
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: WebApplication1
+          path: ${{ github.workspace }}
 
-    - name: Login to Azure
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Deploy to Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        package: ./webapp
-        virtual-application: 'WebApplication1'
-        app-offline: true
-        clean: true
-        start-up-command: 'dotnet WebApplication1.dll'
+      - name: Deploy WebApplication1 to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'Git-webapp'
+          package: ${{ github.workspace }}/WebApplication1.zip
+          clean: false
