@@ -24,13 +24,13 @@ jobs:
 
       - name: Prepare Directory Structure
         run: |
-          $deployPath = "${{ github.workspace }}/deploy/WebApplication1"
+          $deployPath = "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1"
           New-Item -ItemType Directory -Path $deployPath -Force
           Copy-Item -Path "${{ github.workspace }}/published/*" -Destination $deployPath -Recurse -Force
           Get-ChildItem -Path $deployPath -Recurse | Format-Table -Property FullName, Length
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
         shell: pwsh
 
       - name: Upload Artifact
