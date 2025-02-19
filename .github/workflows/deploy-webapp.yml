@@ -8,47 +8,38 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup .NET 6
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v2
         with:
           dotnet-version: '6.0.x'
 
+      - name: Restore NuGet packages
+        run: dotnet restore ${{ env.solution }}
+
       - name: Build and Publish WebApplication1
-        run: |
-          dotnet restore
-          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/published"
+        run: dotnet publish '**/WebApplication1.csproj' --configuration ${{ env.buildConfiguration }} --output ${{ github.workspace }}/WebApplication1
 
-      - name: Prepare Directory Structure
-        run: |
-          $deployPath = "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1"
-          New-Item -ItemType Directory -Path $deployPath -Force
-          Copy-Item -Path "${{ github.workspace }}/published/*" -Destination $deployPath -Recurse -Force
-          Get-ChildItem -Path $deployPath -Recurse | Format-Table -Property FullName, Length
-
-      - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
-        shell: pwsh
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2
         with:
-          name: WebApplication1
-          path: ${{ github.workspace }}/WebApplication1.zip
+          name: drop
+          path: ${{ github.workspace }}/WebApplication1
 
   deploy:
     name: Deploy to Azure Web App
     runs-on: windows-latest
     needs: build
+
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
-          name: WebApplication1
-          path: ${{ github.workspace }}
+          name: drop
 
       - name: Azure Login
         uses: azure/login@v1
@@ -56,9 +47,12 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
-          package: ${{ github.workspace }}/WebApplication1.zip
-          type: 'zip'
-          clean: false
+          package: '${{ github.workspace }}/WebApplication1'
+          slot-name: 'production'
+          virtual-application: 'WebApplication1'
+          enable-custom-deployment: true
+          deployment-type: 'webDeploy'
+          app-settings: '-SCM_DO_BUILD_DURING_DEPLOYMENT false'
