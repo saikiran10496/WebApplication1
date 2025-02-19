@@ -25,7 +25,7 @@ jobs:
         run: dotnet publish '**/WebApplication1.csproj' --configuration ${{ env.buildConfiguration }} --output ${{ github.workspace }}/WebApplication1
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: drop
           path: ${{ github.workspace }}/WebApplication1
@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: drop
 
