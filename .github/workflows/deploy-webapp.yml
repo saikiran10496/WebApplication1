@@ -24,8 +24,8 @@ jobs:
 
       - name: Prepare Directory Structure
         run: |
-          # Define the deployment path within the zip
-          $deployPath = "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1"
+          # Create the correct virtual application structure
+          $deployPath = "${{ github.workspace }}/deploy/WebApplication1"
           New-Item -ItemType Directory -Path $deployPath -Force
           
           # Move all published files to the virtual application directory
@@ -44,8 +44,6 @@ jobs:
     name: Deploy to Azure Web App
     runs-on: windows-latest
     needs: build
-    environment:
-      name: Production
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
@@ -59,7 +57,8 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         with:
           app-name: 'Git-webapp'
+          virtual-application: 'WebApplication1'
           package: ${{ github.workspace }}/WebApplication1.zip
