@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+    
 jobs:
   build:
     runs-on: windows-latest
@@ -16,37 +17,23 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
+      - name: Create deployment structure
+        run: |
+          mkdir -p "${{ github.workspace }}/deploy/site/wwwroot"
+          mkdir -p "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1"
+
       - name: Publish WebApplication1
-        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/temp/site/wwwroot/WebApplication1
-
-      # Create .deployment file to specify custom deployment script
-      - name: Create .deployment file
         run: |
-          Set-Content -Path "${{ github.workspace }}/deploy/temp/.deployment" -Value @"
-          [config]
-          SCM_TOUCH_WEBCONFIG_AFTER_DEPLOYMENT=0
-          command=deploy.cmd
-          "@
+          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1"
 
-      # Create custom deployment script
-      - name: Create Deploy Script
-        shell: cmd
+      - name: Copy web.config
         run: |
-          echo @echo off > ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo Copying files to WebApplication1 directory... >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo if not exist "%%DEPLOYMENT_TARGET%%\WebApplication1" mkdir "%%DEPLOYMENT_TARGET%%\WebApplication1" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\site\wwwroot\WebApplication1" "%%DEPLOYMENT_TARGET%%\WebApplication1\" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo if %%ERRORLEVEL%% NEQ 0 goto error >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo Deployment Successful. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo goto end >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo :error >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo An error has occurred during web site deployment. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo exit /b 1 >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo :end >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo Finished successfully. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
+          Copy-Item "web.config" -Destination "${{ github.workspace }}/deploy/site/wwwroot/WebApplication1/web.config" -Force
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/temp/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+        run: |
+          cd "${{ github.workspace }}/deploy"
+          Compress-Archive -Path "site/wwwroot/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip" -Force
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
