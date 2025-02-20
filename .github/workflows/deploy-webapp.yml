@@ -66,14 +66,9 @@ jobs:
           
       - name: Debug Deployment Command
         run: |
-          $publishUrl = $env:PUBLISH_URL
-          $username = $env:AZURE_PUBLISH_USERNAME
-          $password = $env:AZURE_PUBLISH_PASSWORD
+          $command = "msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName='$computerName',AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
+          Write-Host "Full Command: $command"
           
-          $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp"
-          
-          Write-Host "Deploy Command: msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName='$computerName',AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
-
       - name: Deploy WebApplication1 to Azure Web App
         shell: pwsh
         run: |
@@ -82,6 +77,8 @@ jobs:
           $password = $env:AZURE_PUBLISH_PASSWORD
           
           $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp"
+          
+          Write-Host "Deploy Command: msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName='$computerName',AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
           
           & 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe' `
             -verb:sync `
