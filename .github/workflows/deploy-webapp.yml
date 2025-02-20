@@ -52,8 +52,16 @@ jobs:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
 
-      - name: Move WebApplication1 to Virtual Path
+      - name: Move WebApplication1 to Virtual Path using Kudu API
         run: |
-          Invoke-Command -ScriptBlock {
-            Move-Item -Path "C:\home\site\wwwroot\*" -Destination "C:\home\site\wwwroot\WebApplication1\" -Force
-          }
+          $KUDU_API = "https://$env:APP_NAME.scm.azurewebsites.net/api/command"
+          $USERNAME = "$env:APP_NAME"
+          $PASSWORD = "${{ secrets.KUDU_PASSWORD }}"  # Add this secret in GitHub
+          $BASIC_AUTH = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${USERNAME}:${PASSWORD}"))
+          $HEADERS = @{ Authorization = "Basic $BASIC_AUTH" }
+
+          $COMMAND = "mkdir C:\home\site\wwwroot\WebApplication1 && move C:\home\site\wwwroot\* C:\home\site\wwwroot\WebApplication1"
+
+          Invoke-RestMethod -Uri $KUDU_API -Method Post -Headers $HEADERS -Body (@{ command = "cmd /c $COMMAND" } | ConvertTo-Json) -ContentType "application/json"
+        env:
+          APP_NAME: 'Git-webapp'
