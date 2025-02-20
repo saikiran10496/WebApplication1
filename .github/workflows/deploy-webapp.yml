@@ -1,4 +1,4 @@
-name: Deploy WebApplication2 to Azure Web App
+name: Deploy WebApplication1 to Azure Web App
 
 on:
   push:
@@ -16,8 +16,8 @@ jobs:
         with:
           dotnet-version: '6.0.x'
 
-      - name: Publish WebApplication2
-        run: dotnet publish WebApplication2/WebApplication2.csproj -c Release -o ${{ github.workspace }}/deploy/temp/site/wwwroot/WebApplication2
+      - name: Publish WebApplication1
+        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/temp/site/wwwroot/WebApplication1
 
       # Create .deployment file to specify custom deployment script
       - name: Create .deployment file
@@ -33,9 +33,9 @@ jobs:
         shell: cmd
         run: |
           echo @echo off > ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo Copying files to WebApplication2 directory... >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo if not exist "%%DEPLOYMENT_TARGET%%\WebApplication2" mkdir "%%DEPLOYMENT_TARGET%%\WebApplication2" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\site\wwwroot\WebApplication2" "%%DEPLOYMENT_TARGET%%\WebApplication2\" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
+          echo echo Copying files to WebApplication1 directory... >> ${{ github.workspace }}/deploy/temp/deploy.cmd
+          echo if not exist "%%DEPLOYMENT_TARGET%%\WebApplication1" mkdir "%%DEPLOYMENT_TARGET%%\WebApplication1" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
+          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\site\wwwroot\WebApplication1" "%%DEPLOYMENT_TARGET%%\WebApplication1\" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
           echo if %%ERRORLEVEL%% NEQ 0 goto error >> ${{ github.workspace }}/deploy/temp/deploy.cmd
           echo echo Deployment Successful. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
           echo goto end >> ${{ github.workspace }}/deploy/temp/deploy.cmd
@@ -46,13 +46,13 @@ jobs:
           echo echo Finished successfully. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
 
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/deploy/temp/*" -DestinationPath "${{ github.workspace }}/WebApplication2.zip"
+        run: Compress-Archive -Path "${{ github.workspace }}/deploy/temp/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WebApplication2
-          path: ${{ github.workspace }}/WebApplication2.zip
+          name: WebApplication1
+          path: ${{ github.workspace }}/WebApplication1.zip
 
   deploy:
     name: Deploy to Azure Web App
@@ -62,7 +62,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: WebApplication2
+          name: WebApplication1
           path: ${{ github.workspace }}
 
       - name: Azure Login
@@ -75,11 +75,11 @@ jobs:
         continue-on-error: true  # Avoid failure if already stopped
 
 
-      - name: Deploy WebApplication2 to Azure Web App
+      - name: Deploy WebApplication1 to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
-          package: ${{ github.workspace }}/WebApplication2.zip
+          package: ${{ github.workspace }}/WebApplication1.zip
 
       - name: Start Azure Web App
         run: az webapp start --name Git-webapp --resource-group Git-grp
