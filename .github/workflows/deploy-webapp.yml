@@ -19,34 +19,22 @@ jobs:
 
       - name: Publish WebApplication1
         run: |
-          # Show current directory and contents
-          Write-Host "Current directory:"
-          Get-Location
-          Write-Host "Directory contents:"
-          Get-ChildItem
-          
-          # Publish the application
           dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish"
-          
-          # Verify publish output
-          Write-Host "Published files:"
-          Get-ChildItem "${{ github.workspace }}/publish"
 
       - name: Add deployment config
         run: |
+          # Create .deployment file with Kudu settings
           Add-Content -Path "${{ github.workspace }}/publish/.deployment" -Value @"
           [config]
           SCM_DO_BUILD_DURING_DEPLOYMENT=true
           WEBSITE_RUN_FROM_PACKAGE=0
+          SCM_SKIP_EXISTING_FILES=true
+          KUDU_SYNC_SKIP=WebApplication2
           "@
 
       - name: Create ZIP Package
         run: |
-          # Create zip directly from publish folder
           Compress-Archive -Path "${{ github.workspace }}/publish/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip" -Force
-          
-          # Verify zip file exists
-          Get-Item "${{ github.workspace }}/WebApplication1.zip"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
