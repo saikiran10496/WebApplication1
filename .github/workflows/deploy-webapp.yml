@@ -11,12 +11,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: Setup .NET 6
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '6.0.x'
-          
+
       - name: Publish WebApplication1
         run: |
           mkdir -p "${{ github.workspace }}/publish/WebApplication1"
@@ -24,7 +24,7 @@ jobs:
 
       - name: Create ZIP Package
         run: Compress-Archive -Path "${{ github.workspace }}/publish/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
-        
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -40,17 +40,20 @@ jobs:
         with:
           name: WebApplication1
           path: ${{ github.workspace }}
-        
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy WebApplication1 to Virtual Application Path
+      - name: Deploy WebApplication1 to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          target-path: 'WebApplication1'  # Deploy to the configured virtual path
-        env:
-          WEBSITE_RUN_FROM_PACKAGE: 1
+
+      - name: Move WebApplication1 to Virtual Path
+        run: |
+          Invoke-Command -ScriptBlock {
+            Move-Item -Path "C:\home\site\wwwroot\*" -Destination "C:\home\site\wwwroot\WebApplication1\" -Force
+          }
