@@ -19,17 +19,26 @@ jobs:
           
       - name: Publish WebApplication1
         run: |
-          # Create the directory for WebApplication1
           mkdir -p "${{ github.workspace }}/publish/WebApplication1"
-          # Publish directly to WebApplication1 directory
           dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/WebApplication1"
-          
-      - name: Add deployment config
+      
+      - name: Create .deployment and settings files
         run: |
-          Add-Content -Path "${{ github.workspace }}/publish/.deployment" -Value @"
+          # Create .deployment file
+          Set-Content -Path "${{ github.workspace }}/publish/.deployment" -Value @"
           [config]
           SCM_DO_BUILD_DURING_DEPLOYMENT=true
           WEBSITE_RUN_FROM_PACKAGE=0
+          command=deploy.cmd
+          "@
+
+          # Create .settings file to skip WebApplication2
+          Set-Content -Path "${{ github.workspace }}/publish/.settings" -Value @"
+          <settings>
+            <skipDirectories>
+              <directory>\\site\\wwwroot\\WebApplication2</directory>
+            </skipDirectories>
+          </settings>
           "@
           
       - name: Create ZIP Package
@@ -62,5 +71,3 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          respect-pom-xml: false
-          clean: false
