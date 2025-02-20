@@ -23,8 +23,7 @@ jobs:
           Start-Process msiexec.exe -Wait -ArgumentList '/I WebDeploy_amd64_en-US.msi /quiet ADDLOCAL=ALL'
           
       - name: Publish WebApplication1
-        run: |
-          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/WebApplication1"
+        run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/WebApplication1"
           
       - name: Create ZIP Package
         run: Compress-Archive -Path "${{ github.workspace }}/publish/WebApplication1/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
@@ -72,7 +71,7 @@ jobs:
           $username = $env:AZURE_PUBLISH_USERNAME
           $password = $env:AZURE_PUBLISH_PASSWORD
           
-          $computerName = "https://$username:$password@${publishUrl}/msdeploy.axd?site=Git-webapp"
+          $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp"
           
           & 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe' `
             -verb:sync `
@@ -84,3 +83,4 @@ jobs:
             -enableRule:DoNotDeleteRule `
             -retryAttempts:6 `
             -retryInterval:10000
+
