@@ -19,11 +19,21 @@ jobs:
           
       - name: Publish WebApplication1
         run: |
-          # Create the directory for WebApplication1
-          mkdir -p "${{ github.workspace }}/publish/WebApplication1"
-          # Publish directly to WebApplication1 directory
-          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/WebApplication1"
+          # Show current directory structure before publish
+          Write-Host "Directory structure before publish:"
+          Get-ChildItem -Path ${{ github.workspace }} -Recurse -Depth 2
           
+          # Create the publish directory
+          $publishPath = "${{ github.workspace }}/publish"
+          New-Item -ItemType Directory -Force -Path $publishPath
+          
+          # Publish the application
+          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "$publishPath"
+          
+          # Show directory structure after publish
+          Write-Host "`nDirectory structure after publish:"
+          Get-ChildItem -Path $publishPath -Recurse -Depth 2
+      
       - name: Add deployment config
         run: |
           Add-Content -Path "${{ github.workspace }}/publish/.deployment" -Value @"
@@ -31,16 +41,18 @@ jobs:
           SCM_DO_BUILD_DURING_DEPLOYMENT=true
           WEBSITE_RUN_FROM_PACKAGE=0
           "@
-          
+      
       - name: Create ZIP Package
-        run: Compress-Archive -Path "${{ github.workspace }}/publish/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
-        
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: WebApplication1
-          path: ${{ github.workspace }}/WebApplication1.zip
-
+        run: |
+          # Create a temporary directory for files to zip
+          $tempDir = "${{ github.workspace }}/temp_publish"
+          New-Item -ItemType Directory -Force -Path $tempDir
+          
+          # Copy published files - simplified path
+          Copy-Item "${{ github.workspace }}/publish/*" -Destination "$tempDir" -Recurse
+          
+          # Create the zip from the temporary directory
+          Compress-Archive -Path "$tempDir/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip" -Force
   deploy:
     name: Deploy to Azure Web App
     runs-on: windows-latest
