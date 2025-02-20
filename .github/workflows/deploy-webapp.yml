@@ -44,12 +44,12 @@ jobs:
         with:
           name: WebApplication1
           path: ${{ github.workspace }}
-          
+  
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          
+  
       - name: Get Web App Publish Profile
         id: publishprofile
         shell: pwsh
@@ -58,33 +58,42 @@ jobs:
           $publishUrl = $profile[0].publishUrl
           $username = $profile[0].userName
           $password = $profile[0].userPWD
-          
+  
           echo "::add-mask::$password"
           echo "AZURE_PUBLISH_USERNAME=$username" >> $env:GITHUB_ENV
           echo "AZURE_PUBLISH_PASSWORD=$password" >> $env:GITHUB_ENV
           echo "PUBLISH_URL=$publishUrl" >> $env:GITHUB_ENV
-          
-      - name: Debug Deployment Command
-        run: |
-          $command = "msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName='$computerName',AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
-          Write-Host "Full Command: $command"
-          
-      - name: Deploy WebApplication1 to Azure Web App
+  
+      - name: Debug Raw msdeploy Command  # Add this step here
         shell: pwsh
         run: |
           $publishUrl = $env:PUBLISH_URL
           $username = $env:AZURE_PUBLISH_USERNAME
           $password = $env:AZURE_PUBLISH_PASSWORD
-      
-          # Escape the dollar sign if the username starts with it
+  
           if ($username.StartsWith('$')) {
               $username = "`$username"
           }
-      
-          $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp" # Double quotes here
-      
-          Write-Host "Deploy Command: msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName='$computerName',AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
-      
+  
+          $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp"
+  
+          $msdeployCommand = "msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName='$computerName',AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
+  
+          Write-Host "Raw msdeploy Command: $msdeployCommand"
+  
+      - name: Deploy WebApplication1 to Azure Web App # Existing deployment step
+        shell: pwsh
+        run: |
+          $publishUrl = $env:PUBLISH_URL
+          $username = $env:AZURE_PUBLISH_USERNAME
+          $password = $env:AZURE_PUBLISH_PASSWORD
+  
+          if ($username.StartsWith('$')) {
+              $username = "`$username"
+          }
+  
+          $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp"
+  
           $msdeployArgs = @(
               "-verb:sync",
               "-source:package='${{ github.workspace }}/WebApplication1.zip'",
@@ -96,5 +105,5 @@ jobs:
               "-retryAttempts:6",
               "-retryInterval:10000"
           )
-      
+  
           & 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe' $msdeployArgs
