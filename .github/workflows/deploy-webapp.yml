@@ -87,23 +87,23 @@ jobs:
           $publishUrl = $env:PUBLISH_URL
           $username = $env:AZURE_PUBLISH_USERNAME
           $password = $env:AZURE_PUBLISH_PASSWORD
-  
+          
           if ($username.StartsWith('$')) {
               $username = "`$username"
           }
-  
+          
           $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp"
-
+          
           $msdeployArgs = @(
               "-verb:sync",
-              "-source:package='${{ github.workspace }}/WebApplication1.zip'",
-              "-dest:auto,ComputerName='$computerName',AuthType=Basic",
-              '-setParam:name="IIS Web Application Name",value="Git-webapp/WebApplication1"', # Corrected -setParam
+              "-source:package=${{ github.workspace }}/WebApplication1.zip",
+              "-dest:auto,ComputerName=$computerName,AuthType=Basic",
+              "-setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1'",
               "-enableRule:AppOffline",
-              "-skip:objectName='filePath',absolutePath='\\WebApplication2\\.*'",
+              "-skip:objectName=filePath,absolutePath=\\WebApplication2\\.*",
               "-enableRule:DoNotDeleteRule",
               "-retryAttempts:6",
               "-retryInterval:10000"
           )
-      
-          & 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe' $msdeployArgs
+          
+          & 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe' @msdeployArgs
