@@ -57,10 +57,21 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
+      - name: Create ZIP Package
+        run: |
+          # Create a temporary directory for files to zip
+          $tempDir = "${{ github.workspace }}/temp_publish"
+          New-Item -ItemType Directory -Path $tempDir
+          
+          # Copy only WebApplication1 files
+          Copy-Item "${{ github.workspace }}/publish/WebApplication1" -Destination "$tempDir" -Recurse
+          Copy-Item "${{ github.workspace }}/publish/.deployment" -Destination "$tempDir"
+          
+          # Create the zip from the temporary directory
+          Compress-Archive -Path "$tempDir/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+      
       - name: Deploy WebApplication1 to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          respect-pom-xml: false
-          clean: false
