@@ -76,15 +76,20 @@ jobs:
           $username = $env:AZURE_PUBLISH_USERNAME
           $password = $env:AZURE_PUBLISH_PASSWORD
       
-          $computerName = "'https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp'"
+          # Escape the dollar sign if the username starts with it
+          if ($username.StartsWith('$')) {
+              $username = "`$username"
+          }
       
-          Write-Host "Deploy Command: msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName=$computerName,AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
+          $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp" # Double quotes here
+      
+          Write-Host "Deploy Command: msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName='$computerName',AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
       
           $msdeployArgs = @(
               "-verb:sync",
               "-source:package='${{ github.workspace }}/WebApplication1.zip'",
-              "-dest:auto,ComputerName=$computerName,AuthType=Basic",
-              '-setParam:name="IIS Web Application Name",value="Git-webapp/WebApplication1"', # Removed backslashes
+              "-dest:auto,ComputerName='$computerName',AuthType=Basic",
+              '-setParam:name="IIS Web Application Name",value="Git-webapp/WebApplication1"',
               "-enableRule:AppOffline",
               "-skip:objectName='filePath',absolutePath='\\WebApplication2\\.*'",
               "-enableRule:DoNotDeleteRule",
