@@ -84,8 +84,16 @@ jobs:
       - name: Deploy WebApplication1 to Azure Web App
         shell: pwsh
         run: |
-          # ... (rest of your code)
-      
+          $publishUrl = $env:PUBLISH_URL
+          $username = $env:AZURE_PUBLISH_USERNAME
+          $password = $env:AZURE_PUBLISH_PASSWORD
+  
+          if ($username.StartsWith('$')) {
+              $username = "`$username"
+          }
+  
+          $computerName = "https://$username`:$password@$publishUrl/msdeploy.axd?site=Git-webapp"
+
           $msdeployArgs = @(
               "-verb:sync",
               "-source:package='${{ github.workspace }}/WebApplication1.zip'",
