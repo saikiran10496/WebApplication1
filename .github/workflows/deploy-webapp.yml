@@ -84,7 +84,7 @@ jobs:
               "-verb:sync",
               "-source:package='${{ github.workspace }}/WebApplication1.zip'",
               "-dest:auto,ComputerName=$computerName,AuthType=Basic",
-              "-setParam:name=\"IIS Web Application Name\",value=\"Git-webapp/WebApplication1\"",
+              '-setParam:name=\"IIS Web Application Name\",value=\"Git-webapp/WebApplication1\"', # Single quotes around the entire argument
               "-enableRule:AppOffline",
               "-skip:objectName='filePath',absolutePath='\\WebApplication2\\.*'",
               "-enableRule:DoNotDeleteRule",
