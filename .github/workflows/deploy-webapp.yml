@@ -19,10 +19,10 @@ jobs:
           
       - name: Publish WebApplication1
         run: |
-          # Create directory structure
-          mkdir -p "${{ github.workspace }}/publish/site/wwwroot/WebApplication1"
-          # Publish to specific path
-          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/site/wwwroot/WebApplication1"
+          # Create the directory for WebApplication1
+          mkdir -p "${{ github.workspace }}/publish/WebApplication1"
+          # Publish directly to WebApplication1 directory
+          dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/WebApplication1"
           
       - name: Add deployment config
         run: |
