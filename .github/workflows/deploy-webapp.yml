@@ -80,13 +80,16 @@ jobs:
       
           Write-Host "Deploy Command: msdeploy.exe -verb:sync -source:package='${{ github.workspace }}/WebApplication1.zip' -dest:auto,ComputerName=$computerName,AuthType=Basic -setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1' -enableRule:AppOffline -skip:objectName='filePath',absolutePath='\\WebApplication2\\.*' -enableRule:DoNotDeleteRule -retryAttempts=6 -retryInterval=10000"
       
-          & 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe' `
-            -verb:sync `
-            -source:package="${{ github.workspace }}/WebApplication1.zip" `
-            -dest:auto,ComputerName=$computerName,AuthType=Basic `
-            -setParam:name="IIS Web Application Name",value="Git-webapp/WebApplication1" `
-            -enableRule:AppOffline `
-            -skip:objectName="filePath",absolutePath="\\WebApplication2\\.*" `
-            -enableRule:DoNotDeleteRule `
-            -retryAttempts:6 `
-            -retryInterval:10000
+          $msdeployArgs = @(
+              "-verb:sync",
+              "-source:package='${{ github.workspace }}/WebApplication1.zip'",
+              "-dest:auto,ComputerName=$computerName,AuthType=Basic",
+              "-setParam:name='IIS Web Application Name',value='Git-webapp/WebApplication1'",
+              "-enableRule:AppOffline",
+              "-skip:objectName='filePath',absolutePath='\\WebApplication2\\.*'",
+              "-enableRule:DoNotDeleteRule",
+              "-retryAttempts:6",
+              "-retryInterval:10000"
+          )
+      
+          & 'C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe' $msdeployArgs
