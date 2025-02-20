@@ -19,9 +19,7 @@ jobs:
           
       - name: Publish WebApplication1
         run: |
-          # Create the directory for WebApplication1
           mkdir -p "${{ github.workspace }}/publish/WebApplication1"
-          # Publish directly to WebApplication1 directory
           dotnet publish WebApplication1/WebApplication1.csproj -c Release -o "${{ github.workspace }}/publish/WebApplication1"
 
       - name: Create ZIP Package
@@ -34,7 +32,6 @@ jobs:
           path: ${{ github.workspace }}/WebApplication1.zip
 
   deploy:
-    name: Deploy WebApplication1 to Azure Web App
     runs-on: windows-latest
     needs: build
     steps:
@@ -48,11 +45,12 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-        
-      - name: Deploy WebApplication1 to Azure Web App
+
+      - name: Deploy WebApplication1 to Virtual Application Path
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
+          target-path: 'WebApplication1'  # Deploy to the configured virtual path
         env:
           WEBSITE_RUN_FROM_PACKAGE: 1
