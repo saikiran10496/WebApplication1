@@ -15,14 +15,18 @@ jobs:
         with:
           dotnet-version: '6.0.x'
       
+      - name: Create Deployment Directory
+        run: |
+          mkdir "${{ github.workspace }}/deploy/temp/site/wwwroot/WebApplication1"
+      
       - name: Publish WebApplication1
         run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/temp/site/wwwroot/WebApplication1
       
-      # Copy deployment files from repository
+      # Copy existing deployment files from repository
       - name: Copy Deployment Files
         run: |
           Copy-Item ".deployment" -Destination "${{ github.workspace }}/deploy/temp/.deployment"
-          Copy-Item "scripts/deploy.cmd" -Destination "${{ github.workspace }}/deploy/temp/deploy.cmd"
+          Copy-Item "deploy.cmd" -Destination "${{ github.workspace }}/deploy/temp/deploy.cmd"
       
       - name: Create ZIP Package
         run: Compress-Archive -Path "${{ github.workspace }}/deploy/temp/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
@@ -58,6 +62,7 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
+          slot-name: 'production'
       
       - name: Start Azure Web App
         run: az webapp start --name Git-webapp --resource-group Git-grp
