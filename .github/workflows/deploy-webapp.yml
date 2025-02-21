@@ -19,32 +19,6 @@ jobs:
       - name: Publish WebApplication1
         run: dotnet publish WebApplication1/WebApplication1.csproj -c Release -o ${{ github.workspace }}/deploy/temp/site/wwwroot/WebApplication1
 
-      # Create .deployment file to specify custom deployment script
-      - name: Create .deployment file
-        run: |
-          Set-Content -Path "${{ github.workspace }}/deploy/temp/.deployment" -Value @"
-          [config]
-          SCM_TOUCH_WEBCONFIG_AFTER_DEPLOYMENT=0
-          command=deploy.cmd
-          "@
-
-      # Create custom deployment script
-      - name: Create Deploy Script
-        shell: cmd
-        run: |
-          echo @echo off > ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo Copying files to WebApplication1 directory... >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo if not exist "%%DEPLOYMENT_TARGET%%\WebApplication1" mkdir "%%DEPLOYMENT_TARGET%%\WebApplication1" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\site\wwwroot\WebApplication1" "%%DEPLOYMENT_TARGET%%\WebApplication1\" >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo if %%ERRORLEVEL%% NEQ 0 goto error >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo Deployment Successful. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo goto end >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo :error >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo An error has occurred during web site deployment. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo exit /b 1 >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo :end >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-          echo echo Finished successfully. >> ${{ github.workspace }}/deploy/temp/deploy.cmd
-
       - name: Create ZIP Package
         run: Compress-Archive -Path "${{ github.workspace }}/deploy/temp/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
 
@@ -64,7 +38,42 @@ jobs:
         with:
           name: WebApplication1
           path: ${{ github.workspace }}
-
+      
+      - name: Extract ZIP Package
+        run: Expand-Archive -Path "${{ github.workspace }}/WebApplication1.zip" -DestinationPath "${{ github.workspace }}/deploy"
+      
+      # Create .deployment file
+      - name: Create .deployment file
+        run: |
+          Set-Content -Path "${{ github.workspace }}/deploy/.deployment" -Value @"
+          [config]
+          SCM_TOUCH_WEBCONFIG_AFTER_DEPLOYMENT=0
+          command=deploy.cmd
+          "@
+      
+      # Create deployment script
+      - name: Create Deploy Script
+        shell: cmd
+        run: |
+          echo @echo off > "${{ github.workspace }}/deploy/deploy.cmd"
+          echo echo Copying files to WebApplication1 directory... >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo if not exist "%%DEPLOYMENT_TARGET%%\WebApplication1" mkdir "%%DEPLOYMENT_TARGET%%\WebApplication1" >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo xcopy /Y /E /I "%%DEPLOYMENT_SOURCE%%\site\wwwroot\WebApplication1" "%%DEPLOYMENT_TARGET%%\WebApplication1\" >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo if %%ERRORLEVEL%% NEQ 0 goto error >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo echo Deployment Successful. >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo goto end >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo :error >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo echo An error has occurred during web site deployment. >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo exit /b 1 >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo :end >> "${{ github.workspace }}/deploy/deploy.cmd"
+          echo echo Finished successfully. >> "${{ github.workspace }}/deploy/deploy.cmd"
+      
+      # Create new ZIP with deployment files
+      - name: Create Updated ZIP Package
+        run: |
+          Remove-Item "${{ github.workspace }}/WebApplication1.zip"
+          Compress-Archive -Path "${{ github.workspace }}/deploy/*" -DestinationPath "${{ github.workspace }}/WebApplication1.zip"
+  
       - name: Azure Login
         uses: azure/login@v1
         with:
@@ -72,14 +81,13 @@ jobs:
           
       - name: Stop Azure Web App
         run: az webapp stop --name Git-webapp --resource-group Git-grp
-        continue-on-error: true  # Avoid failure if already stopped
-
-
+        continue-on-error: true
+        
       - name: Deploy WebApplication1 to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-
+          
       - name: Start Azure Web App
         run: az webapp start --name Git-webapp --resource-group Git-grp
