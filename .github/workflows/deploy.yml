@@ -62,7 +62,6 @@ jobs:
         with:
           app-name: 'Git-webapp'
           package: ${{ github.workspace }}/WebApplication1.zip
-          slot-name: 'production'
       
       - name: Start Azure Web App
         run: az webapp start --name Git-webapp --resource-group Git-grp
